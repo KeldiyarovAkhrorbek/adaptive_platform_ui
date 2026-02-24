@@ -1,6 +1,7 @@
 import 'package:adaptive_platform_ui/src/widgets/ios26/ios26_native_tab_bar.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../platform/platform_info.dart';
 import '../style/sf_symbol.dart';
 import 'adaptive_app_bar.dart';
@@ -607,41 +608,30 @@ class _AdaptiveScaffoldState extends State<AdaptiveScaffold> {
           onDestinationSelected: widget.bottomNavigationBar!.onTap!,
           indicatorColor: widget.bottomNavigationBar!.selectedItemColor,
           destinations: widget.bottomNavigationBar!.items!.map((dest) {
-            // Convert icon to IconData if it's a String (SF Symbol - fallback to Icons)
-            final IconData iconData = dest.icon is String
-                ? Icons
-                      .circle // Fallback for Android if SF Symbol is provided
-                : dest.icon as IconData;
-
-            final IconData? selectedIconData = dest.selectedIcon != null
-                ? (dest.selectedIcon is String
-                      ? Icons
-                            .circle // Fallback for Android
-                      : dest.selectedIcon as IconData)
-                : null;
-
-            // Wrap icons with badge if badgeCount is provided
-            Widget iconWidget = Icon(iconData);
-            Widget selectedIconWidget = selectedIconData != null
-                ? Icon(selectedIconData)
-                : Icon(iconData);
+            final Widget iconWidgetBase = _buildAndroidNavIcon(dest.icon);
+            final Widget selectedIconWidgetBase = dest.selectedIcon != null
+                ? _buildAndroidNavIcon(dest.selectedIcon)
+                : _buildAndroidNavIcon(dest.icon);
 
             if (dest.badgeCount != null && dest.badgeCount! > 0) {
-              iconWidget = AdaptiveBadge(
+              final iconWidget = AdaptiveBadge(
                 count: dest.badgeCount,
-                child: Icon(iconData),
+                child: iconWidgetBase,
               );
-              selectedIconWidget = AdaptiveBadge(
+              final selectedIconWidget = AdaptiveBadge(
                 count: dest.badgeCount,
-                child: selectedIconData != null
-                    ? Icon(selectedIconData)
-                    : Icon(iconData),
+                child: selectedIconWidgetBase,
+              );
+              return NavigationDestination(
+                icon: iconWidget,
+                selectedIcon: selectedIconWidget,
+                label: dest.label,
               );
             }
 
             return NavigationDestination(
-              icon: iconWidget,
-              selectedIcon: selectedIconWidget,
+              icon: iconWidgetBase,
+              selectedIcon: selectedIconWidgetBase,
               label: dest.label,
             );
           }).toList(),
@@ -741,6 +731,69 @@ class _AdaptiveScaffoldState extends State<AdaptiveScaffold> {
       'checkmark.circle': CupertinoIcons.checkmark_circle,
     };
     return iconMap[sfSymbol] ?? CupertinoIcons.circle;
+  }
+
+  Widget _buildAndroidNavIcon(dynamic icon) {
+    const size = 24.0;
+    if (icon is IconData) {
+      return Icon(icon, size: size);
+    }
+    if (icon is String) {
+      if (_isAssetPath(icon)) {
+        if (icon.toLowerCase().endsWith('.svg')) {
+          return SvgPicture.asset(icon, width: size, height: size);
+        }
+        return Image.asset(
+          icon,
+          width: size,
+          height: size,
+          fit: BoxFit.contain,
+        );
+      }
+      return Icon(_sfSymbolToMaterialIcon(icon), size: size);
+    }
+    return const Icon(Icons.circle, size: size);
+  }
+
+  bool _isAssetPath(String value) {
+    final lower = value.toLowerCase();
+    return value.contains('/') ||
+        lower.endsWith('.svg') ||
+        lower.endsWith('.png') ||
+        lower.endsWith('.jpg') ||
+        lower.endsWith('.jpeg') ||
+        lower.endsWith('.webp');
+  }
+
+  IconData _sfSymbolToMaterialIcon(String sfSymbol) {
+    const iconMap = {
+      'house': Icons.home_outlined,
+      'house.fill': Icons.home,
+      'magnifyingglass': Icons.search,
+      'heart': Icons.favorite_border,
+      'heart.fill': Icons.favorite,
+      'person': Icons.person_outline,
+      'person.fill': Icons.person,
+      'gear': Icons.settings_outlined,
+      'star': Icons.star_border,
+      'star.fill': Icons.star,
+      'bell': Icons.notifications_none,
+      'bell.fill': Icons.notifications,
+      'bag': Icons.shopping_bag_outlined,
+      'bag.fill': Icons.shopping_bag,
+      'storefront.fill': Icons.storefront,
+      'checkmark.shield.fill': Icons.verified_user,
+      'message.fill': Icons.message,
+      'ellipsis.bubble.fill': Icons.more_horiz,
+      'bookmark': Icons.bookmark_border,
+      'bookmark.fill': Icons.bookmark,
+      'info.circle': Icons.info_outline,
+      'info.circle.fill': Icons.info,
+      'plus.circle': Icons.add_circle_outline,
+      'plus': Icons.add,
+      'checkmark.circle': Icons.check_circle_outline,
+    };
+    return iconMap[sfSymbol] ?? Icons.circle;
   }
 }
 

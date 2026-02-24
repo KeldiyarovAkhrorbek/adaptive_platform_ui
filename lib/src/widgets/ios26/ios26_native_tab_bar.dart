@@ -47,6 +47,7 @@ class _IOS26NativeTabBarState extends State<IOS26NativeTabBar> {
   double? _intrinsicHeight;
   List<String>? _lastLabels;
   List<String>? _lastSymbols;
+  List<String>? _lastSelectedSymbols;
   List<int?>? _lastBadgeCounts;
   TabBarMinimizeBehavior? _lastMinimizeBehavior;
 
@@ -100,6 +101,13 @@ class _IOS26NativeTabBarState extends State<IOS26NativeTabBar> {
         if (icon is String) return icon;
         return '';
       }).toList();
+      final selectedSymbols = widget.destinations.map((e) {
+        final selectedIcon = e.selectedIcon;
+        if (selectedIcon is String) return selectedIcon;
+        final icon = e.icon;
+        if (icon is String) return icon;
+        return '';
+      }).toList();
 
       final searchFlags = widget.destinations.map((e) => e.isSearch).toList();
       final badgeCounts = widget.destinations.map((e) => e.badgeCount).toList();
@@ -110,6 +118,7 @@ class _IOS26NativeTabBarState extends State<IOS26NativeTabBar> {
       final creationParams = <String, dynamic>{
         'labels': labels,
         'sfSymbols': symbols,
+        'selectedSymbols': selectedSymbols,
         'searchFlags': searchFlags,
         'badgeCounts': badgeCounts,
         'spacerFlags': spacerFlags,
@@ -252,20 +261,30 @@ class _IOS26NativeTabBarState extends State<IOS26NativeTabBar> {
       if (icon is String) return icon;
       return '';
     }).toList();
+    final selectedSymbols = widget.destinations.map((e) {
+      final selectedIcon = e.selectedIcon;
+      if (selectedIcon is String) return selectedIcon;
+      final icon = e.icon;
+      if (icon is String) return icon;
+      return '';
+    }).toList();
     final searchFlags = widget.destinations.map((e) => e.isSearch).toList();
     final badgeCounts = widget.destinations.map((e) => e.badgeCount).toList();
 
     if (_lastLabels?.join('|') != labels.join('|') ||
-        _lastSymbols?.join('|') != symbols.join('|')) {
+        _lastSymbols?.join('|') != symbols.join('|') ||
+        _lastSelectedSymbols?.join('|') != selectedSymbols.join('|')) {
       await ch.invokeMethod('setItems', {
         'labels': labels,
         'sfSymbols': symbols,
+        'selectedSymbols': selectedSymbols,
         'searchFlags': searchFlags,
         'badgeCounts': badgeCounts,
         'selectedIndex': widget.selectedIndex,
       });
       _lastLabels = labels;
       _lastSymbols = symbols;
+      _lastSelectedSymbols = selectedSymbols;
       _requestIntrinsicSize();
     }
 
@@ -302,6 +321,13 @@ class _IOS26NativeTabBarState extends State<IOS26NativeTabBar> {
   void _cacheItems() {
     _lastLabels = widget.destinations.map((e) => e.label).toList();
     _lastSymbols = widget.destinations.map((e) {
+      final icon = e.icon;
+      if (icon is String) return icon;
+      return '';
+    }).toList();
+    _lastSelectedSymbols = widget.destinations.map((e) {
+      final selectedIcon = e.selectedIcon;
+      if (selectedIcon is String) return selectedIcon;
       final icon = e.icon;
       if (icon is String) return icon;
       return '';
