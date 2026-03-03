@@ -162,6 +162,30 @@ class iOS26ToolbarPlatformView: NSObject, FlutterPlatformView {
             navigationItem.title = title
         }
 
+        if #available(iOS 13.0, *) {
+            let appearance = navigationBar.standardAppearance.copy()
+            var titleAttributes = appearance.titleTextAttributes
+            let fontSize = CGFloat(params["titleFontSize"] as? Double ?? 17.0)
+            let fontWeightValue = params["titleFontWeight"] as? Int
+
+            if let fontFamily = params["titleFontFamily"] as? String,
+               let font = UIFont(name: fontFamily, size: fontSize) {
+                titleAttributes[.font] = font
+            } else if fontWeightValue != nil || params["titleFontSize"] != nil {
+                titleAttributes[.font] = UIFont.systemFont(
+                    ofSize: fontSize,
+                    weight: uiFontWeight(from: fontWeightValue)
+                )
+            }
+
+            appearance.titleTextAttributes = titleAttributes
+            navigationBar.standardAppearance = appearance
+            navigationBar.scrollEdgeAppearance = appearance
+            if #available(iOS 15.0, *) {
+                navigationBar.compactAppearance = appearance
+            }
+        }
+
         // Leading/Back button
         var leadingItems: [UIBarButtonItem] = []
 
@@ -283,6 +307,21 @@ class iOS26ToolbarPlatformView: NSObject, FlutterPlatformView {
             result(nil)
         default:
             result(FlutterMethodNotImplemented)
+        }
+    }
+
+    private func uiFontWeight(from flutterWeight: Int?) -> UIFont.Weight {
+        switch flutterWeight {
+        case 100: return .ultraLight
+        case 200: return .thin
+        case 300: return .light
+        case 400: return .regular
+        case 500: return .medium
+        case 600: return .semibold
+        case 700: return .bold
+        case 800: return .heavy
+        case 900: return .black
+        default: return .regular
         }
     }
 }

@@ -495,6 +495,24 @@ void main() {
       expect(find.byIcon(Icons.settings), findsOneWidget);
     });
 
+    testWidgets('applies custom title text style', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AdaptiveScaffold(
+            appBar: const AdaptiveAppBar(
+              title: 'Styled App',
+              titleTextStyle: TextStyle(fontFamily: 'CustomFont', fontSize: 22),
+            ),
+            body: Text('Body'),
+          ),
+        ),
+      );
+
+      final titleText = tester.widget<Text>(find.text('Styled App'));
+      expect(titleText.style?.fontFamily, 'CustomFont');
+      expect(titleText.style?.fontSize, 22);
+    });
+
     testWidgets('calls action onPressed when tapped', (
       WidgetTester tester,
     ) async {

@@ -234,6 +234,7 @@ class _AdaptiveScaffoldState extends State<AdaptiveScaffold> {
           ),
           bottomNavigationBar: widget.bottomNavigationBar,
           title: widget.appBar?.title,
+          titleTextStyle: widget.appBar?.titleTextStyle,
           actions: widget.appBar?.actions,
           leading: widget.appBar?.leading,
           minimizeBehavior: widget.minimizeBehavior,
@@ -277,7 +278,10 @@ class _AdaptiveScaffoldState extends State<AdaptiveScaffold> {
                 ? false
                 : true, // Let CupertinoNavigationBar handle back button naturally
             middle: widget.appBar!.title != null
-                ? Text(widget.appBar!.title!)
+                ? Text(
+                    widget.appBar!.title!,
+                    style: widget.appBar!.titleTextStyle,
+                  )
                 : null,
             trailing:
                 widget.appBar!.actions != null &&
@@ -489,7 +493,10 @@ class _AdaptiveScaffoldState extends State<AdaptiveScaffold> {
               ? false
               : true, // Let CupertinoNavigationBar handle back button naturally
           middle: widget.appBar!.title != null
-              ? Text(widget.appBar!.title!)
+              ? Text(
+                  widget.appBar!.title!,
+                  style: widget.appBar!.titleTextStyle,
+                )
               : null,
           trailing:
               widget.appBar!.actions != null &&
@@ -574,7 +581,10 @@ class _AdaptiveScaffoldState extends State<AdaptiveScaffold> {
               widget.appBar!.leading != null)) {
         appBar = AppBar(
           title: widget.appBar!.title != null
-              ? Text(widget.appBar!.title!)
+              ? Text(
+                  widget.appBar!.title!,
+                  style: widget.appBar!.titleTextStyle,
+                )
               : null,
           actions: widget.appBar!.actions?.map((action) {
             if (action.title != null) {
@@ -668,7 +678,7 @@ class _AdaptiveScaffoldState extends State<AdaptiveScaffold> {
     else if (widget.appBar != null) {
       appBar = AppBar(
         title: widget.appBar!.title != null
-            ? Text(widget.appBar!.title!)
+            ? Text(widget.appBar!.title!, style: widget.appBar!.titleTextStyle)
             : null,
         actions: widget.appBar!.actions?.map((action) {
           if (action.title != null) {

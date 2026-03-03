@@ -18,6 +18,7 @@ class AdaptiveAppBar {
   /// Creates an adaptive app bar configuration
   const AdaptiveAppBar({
     this.title,
+    this.titleTextStyle,
     this.actions,
     this.leading,
     this.useNativeToolbar = true,
@@ -27,6 +28,12 @@ class AdaptiveAppBar {
 
   /// Title for the app bar
   final String? title;
+
+  /// Text style for the app bar title.
+  ///
+  /// Useful for applying a custom font without replacing the whole platform
+  /// app bar implementation.
+  final TextStyle? titleTextStyle;
 
   /// Action buttons in the app bar
   /// - iOS 26+ with native toolbar: Rendered as native UIBarButtonItem in UIToolbar
@@ -67,6 +74,7 @@ class AdaptiveAppBar {
   /// Creates a copy of this app bar with the given fields replaced
   AdaptiveAppBar copyWith({
     String? title,
+    TextStyle? titleTextStyle,
     List<AdaptiveAppBarAction>? actions,
     Widget? leading,
     bool? useNativeToolbar,
@@ -75,6 +83,7 @@ class AdaptiveAppBar {
   }) {
     return AdaptiveAppBar(
       title: title ?? this.title,
+      titleTextStyle: titleTextStyle ?? this.titleTextStyle,
       actions: actions ?? this.actions,
       leading: leading ?? this.leading,
       useNativeToolbar: useNativeToolbar ?? this.useNativeToolbar,

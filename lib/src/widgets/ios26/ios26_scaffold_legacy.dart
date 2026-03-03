@@ -14,6 +14,7 @@ class IOS26ScaffoldLegacy extends StatefulWidget {
     required this.selectedIndex,
     required this.onDestinationSelected,
     this.title,
+    this.titleTextStyle,
     this.actions,
     this.leading,
     this.minimizeBehavior = TabBarMinimizeBehavior.automatic,
@@ -26,6 +27,7 @@ class IOS26ScaffoldLegacy extends StatefulWidget {
   final int selectedIndex;
   final ValueChanged<int> onDestinationSelected;
   final String? title;
+  final TextStyle? titleTextStyle;
   final List<AdaptiveAppBarAction>? actions;
   final Widget? leading;
   final TabBarMinimizeBehavior minimizeBehavior;
@@ -140,6 +142,7 @@ class _IOS26ScaffoldLegacyState extends State<IOS26ScaffoldLegacy>
               top: 0,
               child: IOS26NativeToolbar(
                 title: widget.title,
+                titleTextStyle: widget.titleTextStyle,
                 leadingText: leadingText,
                 actions: widget.actions,
                 onLeadingTap: leadingCallback,

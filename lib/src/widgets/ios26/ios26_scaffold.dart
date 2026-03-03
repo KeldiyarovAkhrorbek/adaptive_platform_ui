@@ -13,6 +13,7 @@ class IOS26Scaffold extends StatefulWidget {
     super.key,
     this.bottomNavigationBar,
     this.title,
+    this.titleTextStyle,
     this.actions,
     this.leading,
     this.minimizeBehavior = TabBarMinimizeBehavior.automatic,
@@ -23,6 +24,7 @@ class IOS26Scaffold extends StatefulWidget {
 
   final AdaptiveBottomNavigationBar? bottomNavigationBar;
   final String? title;
+  final TextStyle? titleTextStyle;
   final List<AdaptiveAppBarAction>? actions;
   final Widget? leading;
   final TabBarMinimizeBehavior minimizeBehavior;
@@ -190,6 +192,7 @@ class _IOS26ScaffoldState extends State<IOS26Scaffold>
             top: 0,
             child: IOS26NativeToolbar(
               title: widget.title,
+              titleTextStyle: widget.titleTextStyle,
               leading: widget.leading ?? heroLeading,
               showNativeView: showNativeView,
               actions: widget.actions,
