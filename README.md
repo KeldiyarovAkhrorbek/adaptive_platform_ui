@@ -370,7 +370,7 @@ AdaptiveSegmentedControl(
 
 // With icons (SF Symbols on iOS)
 AdaptiveSegmentedControl(
-  labels: [],
+  labels: const [],
   sfSymbols: [
     'house.fill',
     'person.fill',
@@ -379,6 +379,43 @@ AdaptiveSegmentedControl(
   selectedIndex: 0,
   onValueChanged: (index) {},
   iconColor: CupertinoColors.systemBlue,
+)
+
+// With icon + text together
+AdaptiveSegmentedControl(
+  labels: const ['Barchasi', 'Avtomobil', 'Sport'],
+  sfSymbols: const [
+    Icons.layers,
+    Icons.directions_car,
+    Icons.sports_baseball,
+  ],
+  selectedIndex: 0,
+  onValueChanged: (index) {},
+)
+
+// Fully custom segment content
+AdaptiveSegmentedControl(
+  labels: const ['All', 'Cars'],
+  segmentChildren: const [
+    Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(Icons.layers, size: 18),
+        SizedBox(width: 8),
+        Text('Barchasi'),
+      ],
+    ),
+    Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(Icons.directions_car, size: 18),
+        SizedBox(width: 8),
+        Text('Avtomobil'),
+      ],
+    ),
+  ],
+  selectedIndex: 0,
+  onValueChanged: (index) {},
 )
 ```
 

@@ -84,6 +84,69 @@ void main() {
       expect(find.text('A'), findsOneWidget);
       expect(find.text('B'), findsOneWidget);
     });
+
+    testWidgets('renders icon and text together when both are provided', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Center(
+              child: AdaptiveSegmentedControl(
+                labels: const ['Cars', 'Sport'],
+                sfSymbols: const [Icons.directions_car, Icons.sports_baseball],
+                selectedIndex: 0,
+                onValueChanged: (index) {},
+              ),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('Cars'), findsOneWidget);
+      expect(find.text('Sport'), findsOneWidget);
+      expect(find.byIcon(Icons.directions_car), findsOneWidget);
+      expect(find.byIcon(Icons.sports_baseball), findsOneWidget);
+    });
+
+    testWidgets('renders custom segment widgets', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Center(
+              child: AdaptiveSegmentedControl(
+                labels: const ['A', 'B'],
+                segmentChildren: const [
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.layers, size: 18),
+                      SizedBox(width: 6),
+                      Text('Barchasi'),
+                    ],
+                  ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.directions_car, size: 18),
+                      SizedBox(width: 6),
+                      Text('Avtomobil'),
+                    ],
+                  ),
+                ],
+                selectedIndex: 0,
+                onValueChanged: (index) {},
+              ),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('Barchasi'), findsOneWidget);
+      expect(find.text('Avtomobil'), findsOneWidget);
+      expect(find.byIcon(Icons.layers), findsOneWidget);
+      expect(find.byIcon(Icons.directions_car), findsOneWidget);
+    });
   });
 
   group('AdaptiveAlertDialog', () {

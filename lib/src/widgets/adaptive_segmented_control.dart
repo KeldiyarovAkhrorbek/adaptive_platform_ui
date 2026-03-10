@@ -20,6 +20,7 @@ class AdaptiveSegmentedControl extends StatelessWidget {
     this.height = 36.0,
     this.shrinkWrap = false,
     this.sfSymbols,
+    this.segmentChildren,
     this.iconSize,
     this.iconColor,
   });
@@ -48,6 +49,13 @@ class AdaptiveSegmentedControl extends StatelessWidget {
   /// Optional SF Symbol names or IconData
   final List<dynamic>? sfSymbols;
 
+  /// Optional custom widgets for each segment.
+  ///
+  /// When provided, these are rendered instead of generating content from
+  /// [labels] and [sfSymbols]. On iOS 26+, this falls back to a Flutter
+  /// implementation because the native platform view cannot host widgets.
+  final List<Widget>? segmentChildren;
+
   /// Icon size
   final double? iconSize;
 
@@ -56,6 +64,10 @@ class AdaptiveSegmentedControl extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (_usesCustomFlutterContent) {
+      return _buildFlutterSegmentedControl(context);
+    }
+
     // iOS 26+ - Use native iOS 26 segmented control
     if (PlatformInfo.isIOS26OrHigher()) {
       return IOS26SegmentedControl(
@@ -86,34 +98,96 @@ class AdaptiveSegmentedControl extends StatelessWidget {
     return _buildCupertinoSegmentedControl(context);
   }
 
-  Widget _buildCupertinoSegmentedControl(BuildContext context) {
-    // Build children map from labels or icons
-    final Map<int, Widget> children = {};
+  bool get _hasIcons => sfSymbols != null && sfSymbols!.isNotEmpty;
 
-    // Check if using icons
-    final useIcons = sfSymbols != null && sfSymbols!.isNotEmpty;
-    final itemCount = useIcons ? sfSymbols!.length : labels.length;
+  bool get _hasLabels => labels.isNotEmpty;
+
+  bool get _usesCustomFlutterContent =>
+      segmentChildren != null || (_hasIcons && _hasLabels);
+
+  int get _itemCount {
+    if (segmentChildren != null) return segmentChildren!.length;
+    if (_hasIcons && _hasLabels) {
+      return labels.length < sfSymbols!.length
+          ? labels.length
+          : sfSymbols!.length;
+    }
+    if (_hasLabels) return labels.length;
+    if (_hasIcons) return sfSymbols!.length;
+    return 0;
+  }
+
+  double get _effectiveHeight {
+    if (_usesCustomFlutterContent && height < 40) {
+      return 40;
+    }
+    return height;
+  }
+
+  Widget _buildFlutterSegmentedControl(BuildContext context) {
+    if (PlatformInfo.isAndroid) {
+      return _buildMaterialSegmentedButton(context);
+    }
+    return _buildCupertinoSegmentedControl(context);
+  }
+
+  Widget _buildSegmentChild(int index) {
+    if (segmentChildren != null) {
+      return segmentChildren![index];
+    }
+
+    if (_hasIcons && _hasLabels) {
+      final dynamic icon = sfSymbols![index];
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildIconWidget(icon),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Text(
+              labels[index],
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+            ),
+          ),
+        ],
+      );
+    }
+
+    if (_hasIcons) {
+      return _buildIconWidget(sfSymbols![index]);
+    }
+
+    return Text(
+      labels[index],
+      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+    );
+  }
+
+  Widget _buildIconWidget(dynamic icon) {
+    if (icon is Widget) {
+      return icon;
+    }
+
+    if (icon is IconData) {
+      return Icon(icon, size: iconSize ?? 20, color: iconColor);
+    }
+
+    return Text(icon.toString());
+  }
+
+  Widget _buildCupertinoSegmentedControl(BuildContext context) {
+    final Map<int, Widget> children = {};
+    final itemCount = _itemCount;
 
     for (int i = 0; i < itemCount; i++) {
-      if (useIcons) {
-        // Icon mode
-        final dynamic icon = sfSymbols![i];
-        children[i] = Padding(
-          padding: const EdgeInsets.all(8),
-          child: icon is IconData
-              ? Icon(icon, size: iconSize ?? 20, color: iconColor)
-              : Text(icon.toString()),
-        );
-      } else {
-        // Text mode
-        children[i] = Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          child: Text(
-            labels[i],
-            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
-          ),
-        );
-      }
+      children[i] = Padding(
+        padding: EdgeInsets.symmetric(
+          horizontal: _hasIcons && _hasLabels ? 10 : 12,
+          vertical: 8,
+        ),
+        child: _buildSegmentChild(i),
+      );
     }
 
     Widget control = CupertinoSlidingSegmentedControl<int>(
@@ -130,40 +204,25 @@ class AdaptiveSegmentedControl extends StatelessWidget {
       control = Center(child: IntrinsicWidth(child: control));
     }
 
-    return SizedBox(height: height, child: control);
+    return SizedBox(height: _effectiveHeight, child: control);
   }
 
   Widget _buildMaterialSegmentedButton(BuildContext context) {
     final segments = <ButtonSegment<int>>[];
-
-    // Check if using icons
-    final useIcons = sfSymbols != null && sfSymbols!.isNotEmpty;
-    final itemCount = useIcons ? sfSymbols!.length : labels.length;
+    final itemCount = _itemCount;
 
     for (int i = 0; i < itemCount; i++) {
-      if (useIcons) {
-        // Icon mode
-        final dynamic icon = sfSymbols![i];
-        segments.add(
-          ButtonSegment<int>(
-            value: i,
-            icon: icon is IconData
-                ? Icon(icon, size: iconSize ?? 20, color: iconColor)
-                : Icon(Icons.circle, size: iconSize ?? 20, color: iconColor),
-          ),
-        );
-      } else {
-        // Text mode
-        segments.add(
-          ButtonSegment<int>(
-            value: i,
-            label: Text(
-              labels[i],
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
-            ),
-          ),
-        );
-      }
+      segments.add(
+        ButtonSegment<int>(
+          value: i,
+          label: segmentChildren != null || _hasLabels
+              ? _buildSegmentChild(i)
+              : null,
+          icon: segmentChildren == null && _hasIcons && !_hasLabels
+              ? _buildIconWidget(sfSymbols![i])
+              : null,
+        ),
+      );
     }
 
     Widget control = SegmentedButton<int>(
@@ -177,7 +236,7 @@ class AdaptiveSegmentedControl extends StatelessWidget {
             }
           : null,
       style: SegmentedButton.styleFrom(
-        minimumSize: Size.fromHeight(height),
+        minimumSize: Size.fromHeight(_effectiveHeight),
         padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
       ),
     );
