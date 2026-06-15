@@ -302,13 +302,17 @@ class AdaptiveApp extends StatelessWidget {
       );
     }
 
-    // Combine user's builder with our theme builder
+    // Combine user's builder with our theme builder.
+    //
+    // The user's builder wraps the RAW navigator; the theme wrapper goes
+    // OUTSIDE it. wrapWithThemeMode injects a fresh MediaQuery (for
+    // platformBrightness) — placed *below* the user builder it would shadow any
+    // MediaQuery the builder sets up (e.g. a connectivity banner zeroing
+    // padding.top so pages tuck under it). Wrapping the theme on the outside
+    // keeps the user's MediaQuery edits effective for every route.
     final effectiveBuilder = builder != null
         ? (BuildContext context, Widget? child) {
-            // First apply our theme wrapper
-            final themedChild = wrapWithThemeMode(context, child);
-            // Then apply user's builder
-            return builder!(context, themedChild);
+            return wrapWithThemeMode(context, builder!(context, child));
           }
         : wrapWithThemeMode;
 
