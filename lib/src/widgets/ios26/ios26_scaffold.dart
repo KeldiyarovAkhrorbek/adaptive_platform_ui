@@ -7,6 +7,11 @@ import '../adaptive_scaffold.dart';
 import 'ios26_native_tab_bar.dart';
 import 'ios26_native_toolbar.dart';
 
+/// Height of the iOS 26 Liquid Glass toolbar's content area (excluding the
+/// status bar), matching [IOS26NativeToolbar]'s default height. The toolbar is
+/// an overlay, so this amount is added to the body's top padding.
+const double kToolbarContentHeight = 44.0;
+
 /// Native iOS 26 scaffold with UITabBar
 class IOS26Scaffold extends StatefulWidget {
   const IOS26Scaffold({
@@ -16,9 +21,13 @@ class IOS26Scaffold extends StatefulWidget {
     this.titleTextStyle,
     this.actions,
     this.leading,
+    this.tintColor,
+    this.titleWidget,
     this.minimizeBehavior = TabBarMinimizeBehavior.automatic,
     this.enableBlur = true,
     this.useHeroBackButton = true,
+    this.tabBarHidden = false,
+    this.resizeToAvoidBottomInset,
     required this.children,
   });
 
@@ -27,9 +36,16 @@ class IOS26Scaffold extends StatefulWidget {
   final TextStyle? titleTextStyle;
   final List<AdaptiveAppBarAction>? actions;
   final Widget? leading;
+  final Color? tintColor;
+
+  /// Custom widget overlaid at the toolbar's title position.
+  /// When set, the native title is hidden and this widget is centered instead.
+  final Widget? titleWidget;
   final TabBarMinimizeBehavior minimizeBehavior;
   final bool enableBlur;
   final bool useHeroBackButton;
+  final bool tabBarHidden;
+  final bool? resizeToAvoidBottomInset;
   final List<Widget> children;
 
   @override
@@ -104,6 +120,24 @@ class _IOS26ScaffoldState extends State<IOS26Scaffold>
     }
   }
 
+  /// Determines if the current window is in a windowed mode.
+  ///
+  /// This method compares the display size of the device with the viewport size
+  /// calculated from the logical size and device pixel ratio.
+  /// It returns true if the sizes do not match, indicating that the application is not in full-screen mode.
+  bool _getIsWindowed() {
+    final displaySize = View.of(context).display.size;
+    final logicalSize = MediaQuery.sizeOf(context);
+    final devicePixelRatio = MediaQuery.devicePixelRatioOf(context);
+    final viewportSize = Size(
+      logicalSize.width * devicePixelRatio,
+      logicalSize.height * devicePixelRatio,
+    );
+
+    return (displaySize.longestSide != viewportSize.longestSide) ||
+        (displaySize.shortestSide != viewportSize.shortestSide);
+  }
+
   @override
   Widget build(BuildContext context) {
     // Auto back button logic
@@ -119,7 +153,9 @@ class _IOS26ScaffoldState extends State<IOS26Scaffold>
         canPop) {
       final isCurrent = ModalRoute.of(context)?.isCurrent ?? true;
       if (isCurrent) {
-        final backButton = SizedBox(
+        final backButton = Container(
+          // 62px accounts for the iPadOS system window toolbar width in windowed mode
+          margin: EdgeInsets.only(left: _getIsWindowed() ? 62 : 0),
           height: 38,
           width: 38,
           child: AdaptiveButton.sfSymbol(
@@ -153,6 +189,7 @@ class _IOS26ScaffoldState extends State<IOS26Scaffold>
     // Only the underlying UiKitView should be hidden.
     final hasToolbarContent =
         (widget.title != null ||
+        widget.titleWidget != null ||
         widget.leading != null ||
         heroLeading != null ||
         (widget.actions != null && widget.actions!.isNotEmpty));
@@ -166,24 +203,46 @@ class _IOS26ScaffoldState extends State<IOS26Scaffold>
         ? CupertinoColors.white
         : CupertinoColors.black;
 
+    // Content - full screen - use KeepAlive to prevent rebuild
+    // Wrap content with DefaultTextStyle to ensure proper text color
+    Widget bodyContent = DefaultTextStyle(
+      style: TextStyle(
+        color: textColor,
+        fontSize: 17, // iOS default
+      ),
+      child: widget.children.length == 1
+          ? widget.children.first
+          : IndexedStack(
+              index: widget.bottomNavigationBar?.selectedIndex ?? 0,
+              sizing: StackFit.expand,
+              children: widget.children,
+            ),
+    );
+
+    // The Liquid Glass toolbar is drawn as a Positioned overlay on top of the
+    // body (see below), so — unlike CupertinoPageScaffold with a translucent
+    // nav bar — it does NOT inset the body automatically. Mirror that framework
+    // behaviour here by adding the toolbar's height to the body's top padding,
+    // so any SafeArea/SliverSafeArea inside a page clears the toolbar without
+    // per-screen offset hacks. Content still scrolls behind it (scroll-edge
+    // effect) because SafeArea insets rather than clips.
+    if (hasToolbarContent) {
+      final mq = MediaQuery.of(context);
+      bodyContent = MediaQuery(
+        data: mq.copyWith(
+          padding:
+              mq.padding.copyWith(top: mq.padding.top + kToolbarContentHeight),
+          viewPadding: mq.viewPadding
+              .copyWith(top: mq.viewPadding.top + kToolbarContentHeight),
+        ),
+        child: bodyContent,
+      );
+    }
+
     // Build the stack content
     final stackContent = Stack(
       children: [
-        // Content - full screen - use KeepAlive to prevent rebuild
-        // Wrap content with DefaultTextStyle to ensure proper text color
-        DefaultTextStyle(
-          style: TextStyle(
-            color: textColor,
-            fontSize: 17, // iOS default
-          ),
-          child: widget.children.length == 1
-              ? widget.children.first
-              : IndexedStack(
-                  index: widget.bottomNavigationBar?.selectedIndex ?? 0,
-                  sizing: StackFit.expand,
-                  children: widget.children,
-                ),
-        ),
+        bodyContent,
         // Top toolbar - iOS 26 Liquid Glass style - only show if there's content
         if (hasToolbarContent)
           Positioned(
@@ -196,6 +255,8 @@ class _IOS26ScaffoldState extends State<IOS26Scaffold>
               leading: widget.leading ?? heroLeading,
               showNativeView: showNativeView,
               actions: widget.actions,
+              tintColor: widget.tintColor,
+              titleWidget: widget.titleWidget,
               onActionTap: (index) {
                 // Call the appropriate action callback
                 if (widget.actions != null &&
@@ -238,6 +299,7 @@ class _IOS26ScaffoldState extends State<IOS26Scaffold>
                       tint: CupertinoTheme.of(context).primaryColor,
                       minimizeBehavior: widget.minimizeBehavior,
                       showNativeView: showNativeView,
+                      hidden: widget.tabBarHidden,
                     )
                   : IOS26NativeTabBar(
                       destinations: widget.bottomNavigationBar!.items!,
@@ -246,6 +308,7 @@ class _IOS26ScaffoldState extends State<IOS26Scaffold>
                       tint: CupertinoTheme.of(context).primaryColor,
                       minimizeBehavior: widget.minimizeBehavior,
                       showNativeView: showNativeView,
+                      hidden: widget.tabBarHidden,
                     ),
             ),
           ),
@@ -263,7 +326,8 @@ class _IOS26ScaffoldState extends State<IOS26Scaffold>
       // inside a Stack. If the scaffold resizes for the keyboard the tab bar
       // floats above it — non-standard on iOS. Disable the resize so the
       // keyboard window (higher z-order) covers the tab bar naturally.
-      resizeToAvoidBottomInset: !hasBottomNav,
+      resizeToAvoidBottomInset:
+          widget.resizeToAvoidBottomInset ?? !hasBottomNav,
       child: hasBottomNav
           ? NotificationListener<ScrollNotification>(
               onNotification: _handleScrollNotification,

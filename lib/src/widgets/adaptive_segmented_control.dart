@@ -23,6 +23,8 @@ class AdaptiveSegmentedControl extends StatelessWidget {
     this.segmentChildren,
     this.iconSize,
     this.iconColor,
+    this.textColor,
+    this.selectedTextColor,
   });
 
   /// Segment labels to display, in order
@@ -62,6 +64,12 @@ class AdaptiveSegmentedControl extends StatelessWidget {
   /// Icon color
   final Color? iconColor;
 
+  /// Optional text color for unselected segments.
+  final Color? textColor;
+
+  /// Optional text color for the selected segment.
+  final Color? selectedTextColor;
+
   @override
   Widget build(BuildContext context) {
     if (_usesCustomFlutterContent) {
@@ -81,6 +89,8 @@ class AdaptiveSegmentedControl extends StatelessWidget {
         icons: sfSymbols,
         iconSize: iconSize,
         iconColor: iconColor,
+        textColor: textColor,
+        selectedTextColor: selectedTextColor,
       );
     }
 
@@ -131,7 +141,7 @@ class AdaptiveSegmentedControl extends StatelessWidget {
     return _buildCupertinoSegmentedControl(context);
   }
 
-  Widget _buildSegmentChild(int index) {
+  Widget _buildSegmentChild(int index, {Color? labelColor}) {
     if (segmentChildren != null) {
       return segmentChildren![index];
     }
@@ -147,7 +157,11 @@ class AdaptiveSegmentedControl extends StatelessWidget {
             child: Text(
               labels[index],
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: labelColor,
+              ),
             ),
           ),
         ],
@@ -160,7 +174,11 @@ class AdaptiveSegmentedControl extends StatelessWidget {
 
     return Text(
       labels[index],
-      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+      style: TextStyle(
+        fontSize: 13,
+        fontWeight: FontWeight.w500,
+        color: labelColor,
+      ),
     );
   }
 
@@ -177,6 +195,17 @@ class AdaptiveSegmentedControl extends StatelessWidget {
   }
 
   Widget _buildCupertinoSegmentedControl(BuildContext context) {
+    final theme = CupertinoTheme.of(context);
+    final effectiveTextColor =
+        textColor ??
+        theme.textTheme.textStyle.color ??
+        (Theme.of(context).brightness == Brightness.dark
+            ? CupertinoColors.white
+            : CupertinoColors.black);
+    final effectiveSelectedTextColor =
+        selectedTextColor ??
+        (color != null ? CupertinoColors.white : effectiveTextColor);
+
     final Map<int, Widget> children = {};
     final itemCount = _itemCount;
 
@@ -186,28 +215,54 @@ class AdaptiveSegmentedControl extends StatelessWidget {
           horizontal: _hasIcons && _hasLabels ? 10 : 12,
           vertical: 8,
         ),
-        child: _buildSegmentChild(i),
+        child: _buildSegmentChild(
+          i,
+          labelColor: selectedIndex == i
+              ? effectiveSelectedTextColor
+              : effectiveTextColor,
+        ),
       );
     }
 
-    Widget control = CupertinoSlidingSegmentedControl<int>(
-      children: children,
-      groupValue: selectedIndex,
-      onValueChanged: (int? value) {
-        if (enabled && value != null) {
-          onValueChanged(value);
-        }
-      },
+    Widget control = color != null
+        ? CupertinoSlidingSegmentedControl<int>(
+            children: children,
+            groupValue: selectedIndex,
+            thumbColor: color!,
+            onValueChanged: (int? value) {
+              if (enabled && value != null) {
+                onValueChanged(value);
+              }
+            },
+          )
+        : CupertinoSlidingSegmentedControl<int>(
+            children: children,
+            groupValue: selectedIndex,
+            onValueChanged: (int? value) {
+              if (enabled && value != null) {
+                onValueChanged(value);
+              }
+            },
+          );
+
+    control = ConstrainedBox(
+      constraints: BoxConstraints(minHeight: _effectiveHeight),
+      child: control,
     );
 
     if (shrinkWrap) {
       control = Center(child: IntrinsicWidth(child: control));
     }
 
-    return SizedBox(height: _effectiveHeight, child: control);
+    return control;
   }
 
   Widget _buildMaterialSegmentedButton(BuildContext context) {
+    final theme = Theme.of(context);
+    final effectiveTextColor = textColor ?? theme.colorScheme.onSurface;
+    final effectiveSelectedTextColor =
+        selectedTextColor ??
+        (color != null ? Colors.white : effectiveTextColor);
     final segments = <ButtonSegment<int>>[];
     final itemCount = _itemCount;
 
@@ -216,7 +271,12 @@ class AdaptiveSegmentedControl extends StatelessWidget {
         ButtonSegment<int>(
           value: i,
           label: segmentChildren != null || _hasLabels
-              ? _buildSegmentChild(i)
+              ? _buildSegmentChild(
+                  i,
+                  labelColor: selectedIndex == i
+                      ? effectiveSelectedTextColor
+                      : effectiveTextColor,
+                )
               : null,
           icon: segmentChildren == null && _hasIcons && !_hasLabels
               ? _buildIconWidget(sfSymbols![i])
@@ -224,6 +284,14 @@ class AdaptiveSegmentedControl extends StatelessWidget {
         ),
       );
     }
+
+    final buttonStyle = SegmentedButton.styleFrom(
+      minimumSize: Size.fromHeight(_effectiveHeight),
+      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
+      selectedBackgroundColor: color,
+      selectedForegroundColor: selectedTextColor,
+      foregroundColor: textColor,
+    );
 
     Widget control = SegmentedButton<int>(
       segments: segments,
@@ -235,10 +303,7 @@ class AdaptiveSegmentedControl extends StatelessWidget {
               }
             }
           : null,
-      style: SegmentedButton.styleFrom(
-        minimumSize: Size.fromHeight(_effectiveHeight),
-        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
-      ),
+      style: buttonStyle,
     );
 
     if (shrinkWrap) {
