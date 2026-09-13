@@ -195,6 +195,8 @@ class _IOS26NativeTabBarState extends State<IOS26NativeTabBar> {
         'labels': labels,
         'sfSymbols': symbols,
         'selectedSfSymbols': selectedSymbols,
+        // Legacy key read by native code from before 0.1.111.
+        'selectedSymbols': selectedSymbols,
         'assetIcons': assetIcons,
         'selectedAssetIcons': selectedAssetIcons,
         'fileIcons': fileIcons,
@@ -369,6 +371,8 @@ class _IOS26NativeTabBarState extends State<IOS26NativeTabBar> {
         'labels': labels,
         'sfSymbols': symbols,
         'selectedSfSymbols': selectedSymbols,
+        // Legacy key read by native code from before 0.1.111.
+        'selectedSymbols': selectedSymbols,
         'assetIcons': assetIcons,
         'selectedAssetIcons': selectedAssetIcons,
         'fileIcons': fileIcons,
@@ -488,6 +492,8 @@ class _IOS26NativeTabBarState extends State<IOS26NativeTabBar> {
         'labels': labels,
         'sfSymbols': symbols,
         'selectedSfSymbols': selectedSymbols,
+        // Legacy key read by native code from before 0.1.111.
+        'selectedSymbols': selectedSymbols,
         'assetIcons': assetIcons,
         'selectedAssetIcons': selectedAssetIcons,
         'fileIcons': fileIcons,

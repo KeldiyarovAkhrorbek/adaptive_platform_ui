@@ -69,7 +69,7 @@ class iOS26TabBarPlatformView: NSObject, FlutterPlatformView, UITabBarDelegate {
             NSLog("📦 TabBar init dict keys: \(dict.keys)")
             labels = (dict["labels"] as? [String]) ?? []
             symbols = (dict["sfSymbols"] as? [String]) ?? []
-            selectedSymbols = (dict["selectedSfSymbols"] as? [String]) ?? []
+            selectedSymbols = (dict["selectedSfSymbols"] as? [String]) ?? (dict["selectedSymbols"] as? [String]) ?? []
             assetIcons = (dict["assetIcons"] as? [String]) ?? []
             selectedAssetIcons = (dict["selectedAssetIcons"] as? [String]) ?? []
             fileIcons = (dict["fileIcons"] as? [String]) ?? []
@@ -359,7 +359,7 @@ class iOS26TabBarPlatformView: NSObject, FlutterPlatformView, UITabBarDelegate {
                 return
             }
 
-            let selectedSymbols = (args["selectedSfSymbols"] as? [String]) ?? []
+            let selectedSymbols = (args["selectedSfSymbols"] as? [String]) ?? (args["selectedSymbols"] as? [String]) ?? []
             let assetIcons = (args["assetIcons"] as? [String]) ?? []
             let selectedAssetIcons = (args["selectedAssetIcons"] as? [String]) ?? []
             let fileIcons = (args["fileIcons"] as? [String]) ?? []
