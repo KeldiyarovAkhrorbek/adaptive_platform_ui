@@ -18,6 +18,7 @@ class AdaptiveAppBar {
   /// Creates an adaptive app bar configuration
   const AdaptiveAppBar({
     this.title,
+    this.titleTextStyle,
     this.subtitle,
     this.actions,
     this.leading,
@@ -30,6 +31,12 @@ class AdaptiveAppBar {
 
   /// Title for the app bar
   final String? title;
+
+  /// Text style for the app bar title.
+  ///
+  /// Useful for applying a custom font without replacing the whole platform
+  /// app bar implementation.
+  final TextStyle? titleTextStyle;
 
   /// Optional subtitle displayed below the title
   final String? subtitle;
@@ -88,6 +95,7 @@ class AdaptiveAppBar {
   /// Creates a copy of this app bar with the given fields replaced
   AdaptiveAppBar copyWith({
     String? title,
+    TextStyle? titleTextStyle,
     String? subtitle,
     List<AdaptiveAppBarAction>? actions,
     Widget? leading,
@@ -99,6 +107,7 @@ class AdaptiveAppBar {
   }) {
     return AdaptiveAppBar(
       title: title ?? this.title,
+      titleTextStyle: titleTextStyle ?? this.titleTextStyle,
       subtitle: subtitle ?? this.subtitle,
       actions: actions ?? this.actions,
       leading: leading ?? this.leading,

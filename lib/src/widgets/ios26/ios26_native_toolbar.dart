@@ -11,6 +11,7 @@ class IOS26NativeToolbar extends StatefulWidget {
   const IOS26NativeToolbar({
     super.key,
     this.title,
+    this.titleTextStyle,
     this.leading,
     this.leadingText,
     this.actions,
@@ -24,6 +25,7 @@ class IOS26NativeToolbar extends StatefulWidget {
   });
 
   final String? title;
+  final TextStyle? titleTextStyle;
   final Widget? leading;
   final String? leadingText;
   final List<AdaptiveAppBarAction>? actions;
@@ -170,6 +172,12 @@ class _IOS26NativeToolbarState extends State<IOS26NativeToolbar> {
       // Hide native title when a titleWidget overlay is provided
       if (widget.title != null && widget.titleWidget == null)
         'title': widget.title!,
+      if (widget.titleTextStyle?.fontFamily != null)
+        'titleFontFamily': widget.titleTextStyle!.fontFamily!,
+      if (widget.titleTextStyle?.fontSize != null)
+        'titleFontSize': widget.titleTextStyle!.fontSize!,
+      if (widget.titleTextStyle?.fontWeight != null)
+        'titleFontWeight': widget.titleTextStyle!.fontWeight!.value,
       if (widget.leading == null && widget.leadingText != null)
         'leading': widget.leadingText!,
       if (widget.actions != null && widget.actions!.isNotEmpty)
@@ -256,9 +264,10 @@ class _IOS26NativeToolbarState extends State<IOS26NativeToolbar> {
 
   Widget _buildFallbackToolbar() {
     return CupertinoNavigationBar(
-      middle:
-          widget.titleWidget ??
-          (widget.title != null ? Text(widget.title!) : null),
+      middle: widget.titleWidget ??
+          (widget.title != null
+              ? Text(widget.title!, style: widget.titleTextStyle)
+              : null),
       leading: widget.leading,
       trailing: widget.actions != null && widget.actions!.isNotEmpty
           ? Row(

@@ -312,18 +312,23 @@ class AdaptiveApp extends StatelessWidget {
       );
     }
 
-    // Install the fixed toolbar chrome above the navigator but inside our
-    // theme wrapper (so the chrome picks up the Cupertino theme), then apply
-    // the user's builder outermost.
-    Widget hostedThemeBuilder(BuildContext context, Widget? child) =>
-        wrapWithThemeMode(
-          context,
-          AdaptiveToolbarHost(child: child ?? const SizedBox.shrink()),
-        );
+    // Combine the user's builder with our theme builder.
+    //
+    // The toolbar chrome sits above the navigator, inside the theme wrapper so
+    // it picks up the Cupertino theme. The user's builder wraps that, and the
+    // theme wrapper goes OUTSIDE it: wrapWithThemeMode injects a fresh
+    // MediaQuery (for platformBrightness), and placed *below* the user builder
+    // it would shadow any MediaQuery the builder sets up (e.g. a connectivity
+    // banner zeroing padding.top so pages tuck under it).
+    Widget hostedChild(Widget? child) =>
+        AdaptiveToolbarHost(child: child ?? const SizedBox.shrink());
     final effectiveBuilder = builder != null
-        ? (BuildContext context, Widget? child) =>
-              builder!(context, hostedThemeBuilder(context, child))
-        : hostedThemeBuilder;
+        ? (BuildContext context, Widget? child) => wrapWithThemeMode(
+            context,
+            builder!(context, hostedChild(child)),
+          )
+        : (BuildContext context, Widget? child) =>
+              wrapWithThemeMode(context, hostedChild(child));
 
     if (isRouter) {
       return CupertinoApp.router(

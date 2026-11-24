@@ -106,7 +106,7 @@ class iOS26TabBarPlatformView: NSObject, FlutterPlatformView, UITabBarDelegate {
             NSLog("📦 TabBar init dict keys: \(dict.keys)")
             labels = (dict["labels"] as? [String]) ?? []
             symbols = (dict["sfSymbols"] as? [String]) ?? []
-            selectedSymbols = (dict["selectedSfSymbols"] as? [String]) ?? []
+            selectedSymbols = (dict["selectedSfSymbols"] as? [String]) ?? (dict["selectedSymbols"] as? [String]) ?? []
             assetIcons = (dict["assetIcons"] as? [String]) ?? []
             selectedAssetIcons = (dict["selectedAssetIcons"] as? [String]) ?? []
             fileIcons = (dict["fileIcons"] as? [String]) ?? []
@@ -293,23 +293,12 @@ class iOS26TabBarPlatformView: NSObject, FlutterPlatformView, UITabBarDelegate {
                                 : symbols[i]
                             // iOS 26+: Use different rendering modes for selected/unselected
                             if #available(iOS 26.0, *) {
-                                // Unselected: Only apply custom color if unselectedTint is provided
-                                if let unselTint = unselectedTint {
-                                    // Create colored image for unselected state
-                                    if let originalImage = UIImage(systemName: symbols[i]) ?? UIImage(named: symbols[i]) {
-                                        image = originalImage.withTintColor(unselTint, renderingMode: .alwaysOriginal)
-                                    }
-                                } else {
-                                    // No custom color - use template mode to respect theme
-                                    image = (UIImage(systemName: symbols[i]) ?? UIImage(named: symbols[i]))?.withRenderingMode(.alwaysTemplate)
-                                }
-
-                                // Selected: Use template rendering so tintColor applies
-                                selectedImage = (UIImage(systemName: selSymbol) ?? UIImage(named: selSymbol))?.withRenderingMode(.alwaysTemplate)
+                                image = Self.resolveTabIconImage(symbols[i], selected: false, unselectedTint: unselectedTint)
+                                selectedImage = Self.resolveTabIconImage(selSymbol, selected: true, unselectedTint: unselectedTint)
                             } else {
                                 // iOS <26: Use default behavior
-                                image = UIImage(systemName: symbols[i]) ?? UIImage(named: symbols[i])
-                                selectedImage = UIImage(systemName: selSymbol) ?? UIImage(named: selSymbol)
+                                image = Self.resolveTabIconImage(symbols[i], selected: false, unselectedTint: nil)
+                                selectedImage = Self.resolveTabIconImage(selSymbol, selected: true, unselectedTint: nil)
                             }
                         }
 
@@ -429,7 +418,7 @@ class iOS26TabBarPlatformView: NSObject, FlutterPlatformView, UITabBarDelegate {
                 return
             }
 
-            let selectedSymbols = (args["selectedSfSymbols"] as? [String]) ?? []
+            let selectedSymbols = (args["selectedSfSymbols"] as? [String]) ?? (args["selectedSymbols"] as? [String]) ?? []
             let assetIcons = (args["assetIcons"] as? [String]) ?? []
             let selectedAssetIcons = (args["selectedAssetIcons"] as? [String]) ?? []
             let fileIcons = (args["fileIcons"] as? [String]) ?? []
@@ -532,23 +521,12 @@ class iOS26TabBarPlatformView: NSObject, FlutterPlatformView, UITabBarDelegate {
                                 if #available(iOS 26.0, *) {
                                     // Get current unselected color from tab bar
                                     let unselTint = self.tabBar?.unselectedItemTintColor
-
-                                    // Unselected: Only apply custom color if unselectedTint is set
-                                    if let unselTint = unselTint {
-                                        if let originalImage = UIImage(systemName: symbols[i]) ?? UIImage(named: symbols[i]) {
-                                            image = originalImage.withTintColor(unselTint, renderingMode: .alwaysOriginal)
-                                        }
-                                    } else {
-                                        // No custom color - use template mode to respect theme
-                                        image = (UIImage(systemName: symbols[i]) ?? UIImage(named: symbols[i]))?.withRenderingMode(.alwaysTemplate)
-                                    }
-
-                                    // Selected: Use template rendering so tintColor applies
-                                    selectedImage = (UIImage(systemName: selSymbol) ?? UIImage(named: selSymbol))?.withRenderingMode(.alwaysTemplate)
+                                    image = Self.resolveTabIconImage(symbols[i], selected: false, unselectedTint: unselTint)
+                                    selectedImage = Self.resolveTabIconImage(selSymbol, selected: true, unselectedTint: unselTint)
                                 } else {
                                     // iOS <26: Use default behavior
-                                    image = UIImage(systemName: symbols[i]) ?? UIImage(named: symbols[i])
-                                    selectedImage = UIImage(systemName: selSymbol) ?? UIImage(named: selSymbol)
+                                    image = Self.resolveTabIconImage(symbols[i], selected: false, unselectedTint: nil)
+                                    selectedImage = Self.resolveTabIconImage(selSymbol, selected: true, unselectedTint: nil)
                                 }
                             }
 
@@ -789,18 +767,11 @@ class iOS26TabBarPlatformView: NSObject, FlutterPlatformView, UITabBarDelegate {
                             : currentSymbols[i]
                         if #available(iOS 26.0, *) {
                             let unselTint = bar.unselectedItemTintColor
-
-                            if let unselTint = unselTint {
-                                if let originalImage = UIImage(systemName: currentSymbols[i]) ?? UIImage(named: currentSymbols[i]) {
-                                    image = originalImage.withTintColor(unselTint, renderingMode: .alwaysOriginal)
-                                }
-                            } else {
-                                image = (UIImage(systemName: currentSymbols[i]) ?? UIImage(named: currentSymbols[i]))?.withRenderingMode(.alwaysTemplate)
-                            }
-                            selectedImage = (UIImage(systemName: selSymbol) ?? UIImage(named: selSymbol))?.withRenderingMode(.alwaysTemplate)
+                            image = Self.resolveTabIconImage(currentSymbols[i], selected: false, unselectedTint: unselTint)
+                            selectedImage = Self.resolveTabIconImage(selSymbol, selected: true, unselectedTint: unselTint)
                         } else {
-                            image = UIImage(systemName: currentSymbols[i]) ?? UIImage(named: currentSymbols[i])
-                            selectedImage = UIImage(systemName: selSymbol) ?? UIImage(named: selSymbol)
+                            image = Self.resolveTabIconImage(currentSymbols[i], selected: false, unselectedTint: nil)
+                            selectedImage = Self.resolveTabIconImage(selSymbol, selected: true, unselectedTint: nil)
                         }
                     }
 
@@ -999,6 +970,98 @@ class iOS26TabBarPlatformView: NSObject, FlutterPlatformView, UITabBarDelegate {
 
             image.draw(in: CGRect(origin: origin, size: scaledSize))
         }
+    }
+
+    private static func resolveTabIconImage(
+        _ iconValue: String,
+        selected: Bool,
+        unselectedTint: UIColor?
+    ) -> UIImage? {
+        guard !iconValue.isEmpty else { return nil }
+
+        if iconValue.contains("/") || iconValue.hasSuffix(".svg") || iconValue.hasSuffix(".png") {
+            if iconValue.hasSuffix(".svg") {
+                NSLog("⚠️ SVG tab icons are not supported, use PNG instead: \(iconValue)")
+                return nil
+            }
+
+            guard let assetPath = resolveFlutterAssetPath(iconValue) else {
+                NSLog("⚠️ Failed to resolve tab icon asset path: \(iconValue)")
+                return nil
+            }
+
+            guard let uiImage = UIImage(contentsOfFile: assetPath) else {
+                NSLog("⚠️ Failed to load image tab icon: \(iconValue)")
+                return nil
+            }
+            return applyAssetRenderingMode(uiImage)
+        }
+
+        guard let sfImage = UIImage(systemName: iconValue) ?? UIImage(named: iconValue) else {
+            NSLog("⚠️ Unknown SF Symbol for tab icon: \(iconValue)")
+            return nil
+        }
+        return applyRenderingMode(sfImage, selected: selected, unselectedTint: unselectedTint)
+    }
+
+    private static func applyRenderingMode(
+        _ image: UIImage,
+        selected: Bool,
+        unselectedTint: UIColor?
+    ) -> UIImage {
+        let normalized = normalizedTabIconImage(image)
+        if selected {
+            return normalized.withRenderingMode(.alwaysTemplate)
+        }
+        if let unselectedTint = unselectedTint {
+            return normalized.withTintColor(unselectedTint, renderingMode: .alwaysOriginal)
+        }
+        return normalized.withRenderingMode(.alwaysTemplate)
+    }
+
+    private static func applyAssetRenderingMode(_ image: UIImage) -> UIImage {
+        let normalized = normalizedTabIconImage(image)
+        return normalized.withRenderingMode(.alwaysOriginal)
+    }
+
+    private static func resolveFlutterAssetPath(_ asset: String) -> String? {
+        if let p = Bundle.main.path(forResource: "Frameworks/App.framework/flutter_assets/\(asset)", ofType: nil) {
+            return p
+        }
+        if let p = Bundle.main.path(forResource: "flutter_assets/\(asset)", ofType: nil) {
+            return p
+        }
+        return nil
+    }
+
+    private static func normalizedTabIconImage(_ image: UIImage) -> UIImage {
+        let targetSize = CGSize(width: 24, height: 24)
+
+        if image.size == targetSize {
+            return image
+        }
+
+        let imageAspect = image.size.width / max(image.size.height, 1)
+        let targetAspect = targetSize.width / targetSize.height
+
+        var drawSize = targetSize
+        if imageAspect > targetAspect {
+            drawSize.height = targetSize.width / imageAspect
+        } else {
+            drawSize.width = targetSize.height * imageAspect
+        }
+
+        let drawOrigin = CGPoint(
+            x: (targetSize.width - drawSize.width) / 2,
+            y: (targetSize.height - drawSize.height) / 2
+        )
+
+        UIGraphicsBeginImageContextWithOptions(targetSize, false, 0.0)
+        image.draw(in: CGRect(origin: drawOrigin, size: drawSize))
+        let resized = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+
+        return resized ?? image
     }
 }
 

@@ -111,22 +111,23 @@ class _IOS26NativeTabBarState extends State<IOS26NativeTabBar> {
         ((resolvedColor.b * 255.0).round() & 0xff);
   }
 
-  /// Extract SF Symbol name from an icon value.
-  /// Returns empty string for non-SF-Symbol icons (asset paths, IconData, widgets).
+  /// Extract a string icon value: an SF Symbol name or a Flutter asset path.
+  /// Asset paths (e.g. `assets/icons/home.png`) are loaded natively from
+  /// `flutter_assets` with their original colors.
+  /// Returns empty string for non-string icons.
   String _extractSymbol(Object? icon) {
-    if (icon is String && !icon.contains('/')) return icon;
+    if (icon is String) return icon;
     return '';
   }
 
   /// Extract asset path from an icon value.
-  /// Supports AssetImage, ImageIcon(AssetImage), and string paths containing '/'.
-  /// Returns empty string for SF Symbols or other icon types.
+  /// Supports AssetImage and ImageIcon(AssetImage), rendered as tinted icons.
+  /// Returns empty string for other icon types.
   String _extractAssetPath(Object? icon) {
     if (icon is AssetImage) return icon.assetName;
     if (icon is ImageIcon && icon.image is AssetImage) {
       return (icon.image as AssetImage).assetName;
     }
-    if (icon is String && icon.contains('/')) return icon;
     return '';
   }
 
@@ -216,6 +217,8 @@ class _IOS26NativeTabBarState extends State<IOS26NativeTabBar> {
         'labels': labels,
         'sfSymbols': symbols,
         'selectedSfSymbols': selectedSymbols,
+        // Legacy key read by native code from before 0.1.111.
+        'selectedSymbols': selectedSymbols,
         'assetIcons': assetIcons,
         'selectedAssetIcons': selectedAssetIcons,
         'fileIcons': fileIcons,
@@ -393,6 +396,8 @@ class _IOS26NativeTabBarState extends State<IOS26NativeTabBar> {
         'labels': labels,
         'sfSymbols': symbols,
         'selectedSfSymbols': selectedSymbols,
+        // Legacy key read by native code from before 0.1.111.
+        'selectedSymbols': selectedSymbols,
         'assetIcons': assetIcons,
         'selectedAssetIcons': selectedAssetIcons,
         'fileIcons': fileIcons,
@@ -530,6 +535,8 @@ class _IOS26NativeTabBarState extends State<IOS26NativeTabBar> {
         'labels': labels,
         'sfSymbols': symbols,
         'selectedSfSymbols': selectedSymbols,
+        // Legacy key read by native code from before 0.1.111.
+        'selectedSymbols': selectedSymbols,
         'assetIcons': assetIcons,
         'selectedAssetIcons': selectedAssetIcons,
         'fileIcons': fileIcons,

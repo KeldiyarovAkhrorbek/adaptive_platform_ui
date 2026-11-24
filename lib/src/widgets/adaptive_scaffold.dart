@@ -2,6 +2,7 @@ import 'package:adaptive_platform_ui/src/widgets/ios26/ios26_native_tab_bar.dart
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../platform/platform_info.dart';
 import '../style/sf_symbol.dart';
 import 'adaptive_app_bar.dart';
@@ -406,7 +407,7 @@ class _AdaptiveScaffoldState extends State<AdaptiveScaffold> {
         fontSize: 17,
         fontWeight: FontWeight.w600,
         color: CupertinoColors.label.resolveFrom(context),
-      ),
+      ).merge(widget.appBar?.titleTextStyle),
       subtitleColor: CupertinoColors.secondaryLabel.resolveFrom(context),
     );
   }
@@ -482,6 +483,7 @@ class _AdaptiveScaffoldState extends State<AdaptiveScaffold> {
         IOS26Scaffold(
           bottomNavigationBar: widget.bottomNavigationBar,
           title: widget.appBar?.title,
+          titleTextStyle: widget.appBar?.titleTextStyle,
           actions: widget.appBar?.actions,
           leading: widget.appBar?.leading,
           tintColor: widget.appBar?.tintColor,
@@ -530,7 +532,9 @@ class _AdaptiveScaffoldState extends State<AdaptiveScaffold> {
                 PlatformInfo.isIOS26OrHigher() && useNativeToolbar
                 ? false
                 : true, // Let CupertinoNavigationBar handle back button naturally
-            middle: _buildAppBarTitle(),
+            middle: _buildAppBarTitle(
+              titleStyle: widget.appBar!.titleTextStyle,
+            ),
             trailing:
                 widget.appBar!.actions != null &&
                     widget.appBar!.actions!.isNotEmpty
@@ -731,7 +735,7 @@ class _AdaptiveScaffoldState extends State<AdaptiveScaffold> {
               PlatformInfo.isIOS26OrHigher() && useNativeToolbar
               ? false
               : true, // Let CupertinoNavigationBar handle back button naturally
-          middle: _buildAppBarTitle(),
+          middle: _buildAppBarTitle(titleStyle: widget.appBar!.titleTextStyle),
           trailing:
               widget.appBar!.actions != null &&
                   widget.appBar!.actions!.isNotEmpty
@@ -826,6 +830,7 @@ class _AdaptiveScaffoldState extends State<AdaptiveScaffold> {
         appBar = AppBar(
           title: _buildAppBarTitle(
             crossAxisAlignment: CrossAxisAlignment.start,
+            titleStyle: widget.appBar!.titleTextStyle,
             subtitleFontSize: 13,
             subtitleColor: Theme.of(
               context,
@@ -872,14 +877,9 @@ class _AdaptiveScaffoldState extends State<AdaptiveScaffold> {
           onDestinationSelected: widget.bottomNavigationBar!.onTap!,
           indicatorColor: widget.bottomNavigationBar!.selectedItemColor,
           destinations: widget.bottomNavigationBar!.items!.map((dest) {
-            Widget iconWidget = _buildNavigationIconWidget(
-              rawIcon: dest.icon,
-              platform: TargetPlatform.android,
-            );
-
-            Widget selectedIconWidget = _buildNavigationIconWidget(
-              rawIcon: dest.selectedIcon ?? dest.icon,
-              platform: TargetPlatform.android,
+            Widget iconWidget = _buildAndroidNavIcon(dest.icon);
+            Widget selectedIconWidget = _buildAndroidNavIcon(
+              dest.selectedIcon ?? dest.icon,
             );
 
             if (dest.hasBadge) {
@@ -930,6 +930,7 @@ class _AdaptiveScaffoldState extends State<AdaptiveScaffold> {
       appBar = AppBar(
         title: _buildAppBarTitle(
           crossAxisAlignment: CrossAxisAlignment.start,
+          titleStyle: widget.appBar!.titleTextStyle,
           subtitleFontSize: 13,
           subtitleColor: Theme.of(
             context,
@@ -1008,6 +1009,75 @@ class _AdaptiveScaffoldState extends State<AdaptiveScaffold> {
       'checkmark.circle': CupertinoIcons.checkmark_circle,
     };
     return iconMap[sfSymbol] ?? CupertinoIcons.circle;
+  }
+
+  Widget _buildAndroidNavIcon(dynamic icon) {
+    const size = 24.0;
+    if (icon is IconData) {
+      return Icon(icon, size: size);
+    }
+    if (icon is String) {
+      if (_isAssetPath(icon)) {
+        if (icon.toLowerCase().endsWith('.svg')) {
+          return SvgPicture.asset(icon, width: size, height: size);
+        }
+        return Image.asset(
+          icon,
+          width: size,
+          height: size,
+          fit: BoxFit.contain,
+        );
+      }
+      return Icon(_sfSymbolToMaterialIcon(icon), size: size);
+    }
+    if (icon is Widget || icon is ImageProvider) {
+      return _buildNavigationIconWidget(
+        rawIcon: icon,
+        platform: TargetPlatform.android,
+      );
+    }
+    return const Icon(Icons.circle, size: size);
+  }
+
+  bool _isAssetPath(String value) {
+    final lower = value.toLowerCase();
+    return value.contains('/') ||
+        lower.endsWith('.svg') ||
+        lower.endsWith('.png') ||
+        lower.endsWith('.jpg') ||
+        lower.endsWith('.jpeg') ||
+        lower.endsWith('.webp');
+  }
+
+  IconData _sfSymbolToMaterialIcon(String sfSymbol) {
+    const iconMap = {
+      'house': Icons.home_outlined,
+      'house.fill': Icons.home,
+      'magnifyingglass': Icons.search,
+      'heart': Icons.favorite_border,
+      'heart.fill': Icons.favorite,
+      'person': Icons.person_outline,
+      'person.fill': Icons.person,
+      'gear': Icons.settings_outlined,
+      'star': Icons.star_border,
+      'star.fill': Icons.star,
+      'bell': Icons.notifications_none,
+      'bell.fill': Icons.notifications,
+      'bag': Icons.shopping_bag_outlined,
+      'bag.fill': Icons.shopping_bag,
+      'storefront.fill': Icons.storefront,
+      'checkmark.shield.fill': Icons.verified_user,
+      'message.fill': Icons.message,
+      'ellipsis.bubble.fill': Icons.more_horiz,
+      'bookmark': Icons.bookmark_border,
+      'bookmark.fill': Icons.bookmark,
+      'info.circle': Icons.info_outline,
+      'info.circle.fill': Icons.info,
+      'plus.circle': Icons.add_circle_outline,
+      'plus': Icons.add,
+      'checkmark.circle': Icons.check_circle_outline,
+    };
+    return iconMap[sfSymbol] ?? Icons.circle;
   }
 
   Widget _buildNavigationIconWidget({

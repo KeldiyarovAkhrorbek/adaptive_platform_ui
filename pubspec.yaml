@@ -17,6 +17,7 @@ dependencies:
   # iOS size classes bridged to Dart. Used to place the iOS 26 toolbar on the
   # trailing edge on the Duo inner display.
   foldable: ^1.0.3
+  flutter_svg: ^2.2.0
 
 dev_dependencies:
   flutter_test:

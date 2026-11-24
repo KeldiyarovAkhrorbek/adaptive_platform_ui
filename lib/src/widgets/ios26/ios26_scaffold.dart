@@ -26,6 +26,7 @@ class IOS26Scaffold extends StatefulWidget {
     super.key,
     this.bottomNavigationBar,
     this.title,
+    this.titleTextStyle,
     this.actions,
     this.leading,
     this.tintColor,
@@ -43,6 +44,7 @@ class IOS26Scaffold extends StatefulWidget {
 
   final AdaptiveBottomNavigationBar? bottomNavigationBar;
   final String? title;
+  final TextStyle? titleTextStyle;
   final List<AdaptiveAppBarAction>? actions;
   final Widget? leading;
   final Color? tintColor;
@@ -404,6 +406,7 @@ class _IOS26ScaffoldState extends State<IOS26Scaffold>
                   )
                 : IOS26NativeToolbar(
                     title: widget.title,
+                    titleTextStyle: widget.titleTextStyle,
                     leading: duoVerticalPose
                         ? null
                         : (widget.leading ?? heroLeading),
