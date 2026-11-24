@@ -142,6 +142,11 @@ class iOS26TabBarPlatformView: NSObject, FlutterPlatformView, UITabBarDelegate {
         super.init()
 
         container.backgroundColor = .clear
+        // The glass bar's shadow reaches above the view. Flutter can only draw
+        // over a platform view inside its bounds, so that strip stayed on top
+        // of a page pushed over the bar: a grey band with a hard edge, seen
+        // during the transition. Clipped, the bar looks the same at rest.
+        container.clipsToBounds = true
         if #available(iOS 13.0, *) {
             container.overrideUserInterfaceStyle = isDark ? .dark : .light
         }
