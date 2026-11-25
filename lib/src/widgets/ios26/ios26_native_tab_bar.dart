@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import '../adaptive_scaffold.dart';
 
@@ -42,6 +43,12 @@ class IOS26NativeTabBar extends StatefulWidget {
   @override
   State<IOS26NativeTabBar> createState() => _IOS26NativeTabBarState();
 }
+
+/// Room above the bar inside its platform view, for the glass's shadow and
+/// edge. The native view clips to its bounds, so without it the top of the
+/// effect is cut; outside the bounds, Flutter could not cover it when a page
+/// is pushed over the bar.
+const double _kGlassHeadroom = 24;
 
 class _IOS26NativeTabBarState extends State<IOS26NativeTabBar> {
   MethodChannel? _channel;
@@ -234,6 +241,7 @@ class _IOS26NativeTabBarState extends State<IOS26NativeTabBar> {
         'selectedIndex': widget.selectedIndex,
         'isDark': _isDark,
         'isRtl': _isRtl,
+        'headroom': _kGlassHeadroom,
         'minimizeBehavior': widget.minimizeBehavior.index,
         if (_effectiveTint != null) 'tint': _colorToARGB(_effectiveTint!),
         if (widget.unselectedItemTint != null)
@@ -255,7 +263,11 @@ class _IOS26NativeTabBarState extends State<IOS26NativeTabBar> {
           : const SizedBox.shrink();
 
       final h = widget.height ?? _intrinsicHeight ?? 50.0;
-      return SizedBox(height: h, child: platformView);
+      // The headroom is drawn, not touched: a tap there is the page's.
+      return SizedBox(
+        height: h + _kGlassHeadroom,
+        child: _HitTestBelow(top: _kGlassHeadroom, child: platformView),
+      );
     }
 
     // Fallback for non-iOS
@@ -571,5 +583,36 @@ class _IOS26NativeTabBarState extends State<IOS26NativeTabBar> {
       _lastIndex = widget.selectedIndex;
       await _requestIntrinsicSize();
     } catch (_) {}
+  }
+}
+
+/// Takes no hits in its top [top] pixels, so they reach what is behind it.
+class _HitTestBelow extends SingleChildRenderObjectWidget {
+  const _HitTestBelow({required this.top, required super.child});
+
+  final double top;
+
+  @override
+  RenderObject createRenderObject(BuildContext context) =>
+      _RenderHitTestBelow(top);
+
+  @override
+  void updateRenderObject(
+    BuildContext context,
+    _RenderHitTestBelow renderObject,
+  ) {
+    renderObject.top = top;
+  }
+}
+
+class _RenderHitTestBelow extends RenderProxyBox {
+  _RenderHitTestBelow(this.top);
+
+  double top;
+
+  @override
+  bool hitTest(BoxHitTestResult result, {required Offset position}) {
+    if (position.dy < top) return false;
+    return super.hitTest(result, position: position);
   }
 }

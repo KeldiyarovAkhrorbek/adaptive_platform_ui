@@ -96,6 +96,7 @@ class iOS26TabBarPlatformView: NSObject, FlutterPlatformView, UITabBarDelegate {
         var selectedIndex: Int = 0
         var isDark: Bool = false
         var isRtl: Bool = false
+        var headroom: CGFloat = 0
         var tint: UIColor? = nil
         var bg: UIColor? = nil
         var minimize: Int = 3 // automatic
@@ -130,6 +131,7 @@ class iOS26TabBarPlatformView: NSObject, FlutterPlatformView, UITabBarDelegate {
             if let v = dict["selectedIndex"] as? NSNumber { selectedIndex = v.intValue }
             if let v = dict["isDark"] as? NSNumber { isDark = v.boolValue }
             if let v = dict["isRtl"] as? NSNumber { isRtl = v.boolValue }
+            if let v = dict["headroom"] as? NSNumber { headroom = CGFloat(v.doubleValue) }
             if let n = dict["tint"] as? NSNumber { tint = Self.colorFromARGB(n.intValue) }
             if let n = dict["unselectedItemTint"] as? NSNumber {
                 unselectedTint = Self.colorFromARGB(n.intValue)
@@ -142,10 +144,12 @@ class iOS26TabBarPlatformView: NSObject, FlutterPlatformView, UITabBarDelegate {
         super.init()
 
         container.backgroundColor = .clear
-        // The glass bar's shadow reaches above the view. Flutter can only draw
-        // over a platform view inside its bounds, so that strip stayed on top
-        // of a page pushed over the bar: a grey band with a hard edge, seen
-        // during the transition. Clipped, the bar looks the same at rest.
+        // The glass bar's shadow and edge reach above the bar. Flutter can only
+        // draw over a platform view inside its bounds, so anything outside them
+        // stayed on top of a page pushed over the bar: a grey band with a hard
+        // edge, seen during the transition. So the view is taller than the bar
+        // by `headroom` (the bar sits at its bottom) and clips there: the glass
+        // keeps its whole effect, and all of it is inside what Flutter covers.
         container.clipsToBounds = true
         if #available(iOS 13.0, *) {
             container.overrideUserInterfaceStyle = isDark ? .dark : .light
@@ -345,7 +349,7 @@ class iOS26TabBarPlatformView: NSObject, FlutterPlatformView, UITabBarDelegate {
         NSLayoutConstraint.activate([
             bar.leadingAnchor.constraint(equalTo: container.leadingAnchor),
             bar.trailingAnchor.constraint(equalTo: container.trailingAnchor),
-            bar.topAnchor.constraint(equalTo: container.topAnchor),
+            bar.topAnchor.constraint(equalTo: container.topAnchor, constant: headroom),
             bar.bottomAnchor.constraint(equalTo: container.bottomAnchor),
         ])
 
